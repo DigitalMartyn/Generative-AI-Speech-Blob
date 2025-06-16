@@ -424,61 +424,85 @@
                 return { r, g, b };
             }
 
-            // Parameters from reference - complete set
+            // Parameters from reference URL - exact match
             let params = {
                 ambient: 0,
                 angle1: 0.42,
                 angle2: 0.52,
                 angle3: 0.39,
+                ccRoughness: 0.63,  // Note: ccRougness in URL (typo in original)
                 clearColor: '#371b53',
                 clearcoat: 1,
-                color1: { r: 0, g: 1, b: 0.97 },
-                color2: { r: 0.47, g: 0, b: 1 },
-                color3: { r: 1, g: 1, b: 1 },
+                color1: { r: 0, g: 1, b: 0.97 },      // rgba(0,255,248,1)
+                color2: { r: 0.47, g: 0, b: 1 },      // rgba(120,0,255,1)
+                color3: { r: 1, g: 1, b: 1 },         // rgba(255,255,255,1)
                 decay1: 1,
-                envMap: 1.02,
-                frequency: 3.05,
-                int1: 1.27,
-                int2: 3,
-                int3: 2,
-                int4: 0,        // Additional lights from reference
-                int5: 0.63,
-                ior: 2.33,
-                metalness: 1,
-                numWaves: 12.07,
-                roughness: 0.36,
-                ry: 3.16,
-                scale: 1.03,
-                speed: 4,
-                surfaceDistort: 1.4,
-                surfaceFrequency: 1.74,
-                surfacespeed: 1,
-                useGradient: true,
-                // All light positions from reference
-                x1: -5, y1: 0.07, z1: 1.93,
-                x2: -2.73, y2: -6.67, z2: 5.73,
-                x3: 1.2, y3: 2.67, z3: 4.6,
-                x4: 3.07, y4: 0, z4: 3.53,     // Additional light positions
-                z5: 6.2,
-                // Distance controls from reference
                 dist1: 8.27,
                 dist2: 9.53,
                 dist3: 8.2,
-                // Penumbra controls
+                distort: 0,
+                dynEnv: false,
+                envMap: 1.02,
+                flatShading: false,
+                floor: false,
+                floorColor: { r: 0.043, g: 0.153, b: 0.169 }, // rgba(11,39,43,1)
+                floorEnvMap: 0.37,
+                floorMetalness: 0,
+                floorOpacity: 0.27,
+                floorRoughness: 0.15,
+                floorSize: 0,
+                floorY: -0.4,
+                frequency: 3.05,
+                gradient: 'purple-rain',
+                int1: 1.27,
+                int2: 3,
+                int3: 2,
+                int4: 0,
+                int5: 0.63,
+                ior: 2.33,
+                lights: [1, 2, 3], // lights[0]=1&lights[1]=2&lights[2]=3
+                metalness: 1,
+                numWaves: 12.07,
+                opacity: 1,
                 penum1: 0.66,
                 penum3: 1,
-                // Advanced controls that were missing
+                pp: true, // post-processing
+                reflectivity: 1,
+                roughness: 0.36,
+                rshad: false,
+                ry: 3.16,
+                scale: 1.03,
+                segments: 512, // Higher resolution than our 128
+                shadow1: false,
+                shadow2: false,
+                shadowBias1: false,
+                shadowFocus1: 1,
+                shadowMap: false,
+                sky: false,
+                speed: 4,
+                surfPoleAmount: 1,
+                surfaceDistort: 1.4,
+                surfaceFrequency: 1.74,
+                surfacespeed: 1,
+                transmission: 0,
+                useGradient: true,
+                uv: true,
+                wireframe: false,
+                // Light positions
+                x1: -5, y1: 0.07, z1: 1.93,
+                x2: -2.73, y2: -6.67, z2: 5.73,
+                x3: 1.2, y3: 2.67, z3: 4.6,
+                x4: 3.07, z4: 3.53, // No y4 in URL
+                z5: 6.2,
+                // Our additional parameters
                 subsurface: 0.3,
-                subsurfaceColor: { r: 1, g: 0.42, b: 0.42 }, // #ff6b6b
+                subsurfaceColor: { r: 1, g: 0.42, b: 0.42 },
                 noiseType: 'banded',
                 noiseComplexity: 1.0,
                 noiseScale: 1.0,
                 domainWarp: 0.0,
-                surfPoleAmount: 1,
-                distort: 0,
                 envStyle: 'cosmic',
                 envRotation: 0,
-                // Post-processing
                 bloomStrength: 1.5,
                 bloomThreshold: 0.8,
                 exposure: 2.0
@@ -598,9 +622,9 @@
             light3.position.set(params.x3, params.y3, params.z3);
             scene.add(light3);
 
-            // Light 4 - Additional light (intensity 0 in reference, but positioned)
+            // Light 4 - Additional light (no y4 specified in reference URL)
             const light4 = new THREE.PointLight(col1Hex, params.int4, 10);
-            light4.position.set(params.x4, params.y4, params.z4);
+            light4.position.set(params.x4, 0, params.z4); // y4 not in URL, default to 0
             scene.add(light4);
 
             // Light 5 - Additional light with some intensity, positioned behind
@@ -613,14 +637,19 @@
 
             console.log('Lights created');
 
-            // Create geometry with higher resolution to show the bands clearly
-            const geometry = new THREE.SphereGeometry(1, 128, 128);
+            // Create geometry with exact reference resolution
+            const geometry = new THREE.SphereGeometry(1, params.segments, params.segments);
             const material = new THREE.MeshPhysicalMaterial({
                 color: new THREE.Color(1, 1, 1),
                 metalness: params.metalness,
                 roughness: params.roughness,
                 clearcoat: params.clearcoat,
+                clearcoatRoughness: params.ccRoughness,
                 ior: params.ior,
+                reflectivity: params.reflectivity,
+                transmission: params.transmission,
+                opacity: params.opacity,
+                transparent: params.opacity < 1,
                 envMap: cubeTexture.texture,
                 envMapIntensity: params.envMap
             });
@@ -815,22 +844,36 @@
             document.addEventListener('mousedown', onMouseDown);
             document.addEventListener('mouseup', onMouseUp);
 
-            // Update function
+            // Update function with all reference parameters
             function updateBlob() {
                 try {
                     if (material) {
                         material.metalness = params.metalness;
                         material.roughness = params.roughness;
                         material.clearcoat = params.clearcoat;
+                        material.clearcoatRoughness = params.ccRoughness;
                         material.ior = params.ior;
+                        material.reflectivity = params.reflectivity;
+                        material.transmission = params.transmission;
+                        material.opacity = params.opacity;
+                        material.transparent = params.opacity < 1;
                         material.envMapIntensity = params.envMap;
                     }
                     
                     // Update all 5 lights
                     if (lights.ambientLight) lights.ambientLight.intensity = params.ambient;
-                    if (lights.light1) lights.light1.intensity = params.int1;
-                    if (lights.light2) lights.light2.intensity = params.int2;
-                    if (lights.light3) lights.light3.intensity = params.int3;
+                    if (lights.light1) {
+                        lights.light1.intensity = params.int1;
+                        lights.light1.distance = params.dist1;
+                    }
+                    if (lights.light2) {
+                        lights.light2.intensity = params.int2;
+                        lights.light2.distance = params.dist2;
+                    }
+                    if (lights.light3) {
+                        lights.light3.intensity = params.int3;
+                        lights.light3.distance = params.dist3;
+                    }
                     if (lights.light4) lights.light4.intensity = params.int4;
                     if (lights.light5) lights.light5.intensity = params.int5;
                     
