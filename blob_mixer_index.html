@@ -266,12 +266,40 @@
                     <input type="range" id="int1" min="0" max="5" step="0.01" value="1.27">
                 </div>
                 <div class="control-group">
+                    <label>Light 1 Distance <span class="range-value" id="dist1-value">8.27</span></label>
+                    <input type="range" id="dist1" min="0" max="20" step="0.01" value="8.27">
+                </div>
+                <div class="control-group">
+                    <label>Light 1 Penumbra <span class="range-value" id="penum1-value">0.66</span></label>
+                    <input type="range" id="penum1" min="0" max="2" step="0.01" value="0.66">
+                </div>
+                <div class="control-group">
                     <label>Light 2 Intensity <span class="range-value" id="int2-value">3.00</span></label>
                     <input type="range" id="int2" min="0" max="5" step="0.01" value="3">
                 </div>
                 <div class="control-group">
+                    <label>Light 2 Distance <span class="range-value" id="dist2-value">9.53</span></label>
+                    <input type="range" id="dist2" min="0" max="20" step="0.01" value="9.53">
+                </div>
+                <div class="control-group">
                     <label>Light 3 Intensity <span class="range-value" id="int3-value">2.00</span></label>
                     <input type="range" id="int3" min="0" max="5" step="0.01" value="2">
+                </div>
+                <div class="control-group">
+                    <label>Light 3 Distance <span class="range-value" id="dist3-value">8.20</span></label>
+                    <input type="range" id="dist3" min="0" max="20" step="0.01" value="8.2">
+                </div>
+                <div class="control-group">
+                    <label>Light 3 Penumbra <span class="range-value" id="penum3-value">1.00</span></label>
+                    <input type="range" id="penum3" min="0" max="2" step="0.01" value="1">
+                </div>
+                <div class="control-group">
+                    <label>Light 4 Intensity <span class="range-value" id="int4-value">0.00</span></label>
+                    <input type="range" id="int4" min="0" max="5" step="0.01" value="0">
+                </div>
+                <div class="control-group">
+                    <label>Light 5 Intensity <span class="range-value" id="int5-value">0.63</span></label>
+                    <input type="range" id="int5" min="0" max="5" step="0.01" value="0.63">
                 </div>
             </div>
         </div>
@@ -353,6 +381,8 @@
                 int1: 1.27,
                 int2: 3,
                 int3: 2,
+                int4: 0,        // Additional lights from reference
+                int5: 0.63,
                 ior: 2.33,
                 metalness: 1,
                 numWaves: 12.07,
@@ -364,9 +394,19 @@
                 surfaceFrequency: 1.74,
                 surfacespeed: 1,
                 useGradient: true,
+                // All light positions from reference
                 x1: -5, y1: 0.07, z1: 1.93,
                 x2: -2.73, y2: -6.67, z2: 5.73,
                 x3: 1.2, y3: 2.67, z3: 4.6,
+                x4: 3.07, y4: 0, z4: 3.53,     // Additional light positions
+                z5: 6.2,
+                // Distance controls from reference
+                dist1: 8.27,
+                dist2: 9.53,
+                dist3: 8.2,
+                // Penumbra controls
+                penum1: 0.66,
+                penum3: 1,
                 bloomStrength: 1.5,
                 bloomThreshold: 0.8,
                 exposure: 2.0
@@ -417,21 +457,42 @@
 
             console.log('Environment created');
 
-            // Lighting
+            // Lighting setup with all 5 lights from reference
             const ambientLight = new THREE.AmbientLight(0xffffff, params.ambient);
             scene.add(ambientLight);
 
-            const light1 = new THREE.DirectionalLight(0x00fff8, params.int1);
+            // Convert colors to hex for lights (using gradient colors)
+            const col1Hex = (Math.round(params.color1.r * 255) << 16) | (Math.round(params.color1.g * 255) << 8) | Math.round(params.color1.b * 255);
+            const col2Hex = (Math.round(params.color2.r * 255) << 16) | (Math.round(params.color2.g * 255) << 8) | Math.round(params.color2.b * 255);
+            const col3Hex = (Math.round(params.color3.r * 255) << 16) | (Math.round(params.color3.g * 255) << 8) | Math.round(params.color3.b * 255);
+
+            // Light 1 - Cyan color
+            const light1 = new THREE.DirectionalLight(col1Hex, params.int1);
             light1.position.set(params.x1, params.y1, params.z1);
             scene.add(light1);
 
-            const light2 = new THREE.DirectionalLight(0x7800ff, params.int2);
+            // Light 2 - Purple color  
+            const light2 = new THREE.DirectionalLight(col2Hex, params.int2);
             light2.position.set(params.x2, params.y2, params.z2);
             scene.add(light2);
 
-            const light3 = new THREE.DirectionalLight(0xffffff, params.int3);
+            // Light 3 - White color
+            const light3 = new THREE.DirectionalLight(col3Hex, params.int3);
             light3.position.set(params.x3, params.y3, params.z3);
             scene.add(light3);
+
+            // Light 4 - Additional light (intensity 0 in reference, but positioned)
+            const light4 = new THREE.DirectionalLight(col1Hex, params.int4);
+            light4.position.set(params.x4, params.y4, params.z4);
+            scene.add(light4);
+
+            // Light 5 - Additional light with some intensity
+            const light5 = new THREE.DirectionalLight(col2Hex, params.int5);
+            light5.position.set(0, 0, params.z5); // Only Z position specified in reference
+            scene.add(light5);
+
+            // Store all lights for updates
+            const lights = { ambientLight, light1, light2, light3, light4, light5 };
 
             console.log('Lights created');
 
@@ -634,10 +695,26 @@
                         material.envMapIntensity = params.envMap;
                     }
                     
-                    if (ambientLight) ambientLight.intensity = params.ambient;
-                    if (light1) light1.intensity = params.int1;
-                    if (light2) light2.intensity = params.int2;
-                    if (light3) light3.intensity = params.int3;
+                    // Update all 5 lights
+                    if (lights.ambientLight) lights.ambientLight.intensity = params.ambient;
+                    if (lights.light1) lights.light1.intensity = params.int1;
+                    if (lights.light2) lights.light2.intensity = params.int2;
+                    if (lights.light3) lights.light3.intensity = params.int3;
+                    if (lights.light4) lights.light4.intensity = params.int4;
+                    if (lights.light5) lights.light5.intensity = params.int5;
+                    
+                    // Update light colors based on gradient colors
+                    if (lights.light1 && lights.light2 && lights.light3 && lights.light4 && lights.light5) {
+                        const col1Hex = (Math.round(params.color1.r * 255) << 16) | (Math.round(params.color1.g * 255) << 8) | Math.round(params.color1.b * 255);
+                        const col2Hex = (Math.round(params.color2.r * 255) << 16) | (Math.round(params.color2.g * 255) << 8) | Math.round(params.color2.b * 255);
+                        const col3Hex = (Math.round(params.color3.r * 255) << 16) | (Math.round(params.color3.g * 255) << 8) | Math.round(params.color3.b * 255);
+                        
+                        lights.light1.color.setHex(col1Hex); // Cyan
+                        lights.light2.color.setHex(col2Hex); // Purple
+                        lights.light3.color.setHex(col3Hex); // White
+                        lights.light4.color.setHex(col1Hex); // Cyan
+                        lights.light5.color.setHex(col2Hex); // Purple
+                    }
                     
                     if (blob) blob.scale.setScalar(params.scale);
                     
@@ -669,7 +746,8 @@
                     'metalness', 'roughness', 'clearcoat', 'ior', 'envMap', 'ambient',
                     'frequency', 'numWaves', 'surfaceDistort', 'surfaceFrequency', 'speed',
                     'decay1', 'angle1', 'angle2', 'angle3', 'scale', 'ry',
-                    'int1', 'int2', 'int3', 'bloomStrength', 'bloomThreshold', 'exposure'
+                    'int1', 'int2', 'int3', 'int4', 'int5', 'bloomStrength', 'bloomThreshold', 'exposure',
+                    'dist1', 'dist2', 'dist3', 'penum1', 'penum3'
                 ];
                 
                 rangeControls.forEach(control => {
