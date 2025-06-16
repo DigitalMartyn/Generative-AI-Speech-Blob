@@ -1,0 +1,1154 @@
+                <div class="control-group">
+                    <label>Noise Type</label>
+                    <select id="noiseType">
+                        <option value="banded" selected>Banded (Original)</option>
+                        <option value="worley">Worley/Voronoi</option>
+                        <option value="curl">Curl Noise</option>
+                        <option value="fbm">Fractal Brownian Motion</option>
+                        <option value="mixed">Mixed Complex</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Noise Complexity <span class="range-value" id="noiseComplexity-value">1.00</span></label>
+                    <input type="range" id="noiseComplexity" min="0.1" max="3" step="0.01" value="1">
+                </div>
+                <div class="control-group">
+                    <label>Noise Scale <span class="range-value" id="noiseScale-value">1.00</span></label>
+                    <input type="range" id="noiseScale" min="0.1" max="5" step="0.01" value="1">
+                </div>
+                <div class="control-group">
+                    <label>Domain Warp <span class="range-value" id="domainWarp-value">0.00</span></label>
+                    <input type="range" id="domainWarp" min="0" max="2" step="0.01" value="0">
+                </div>            // Add advanced noise uniforms (simplified)
+            shader.uniforms.uSubsurface = { value: params.subsurface };
+            shader.uniforms.uSubsurfaceColor = { value: new THREE.Vector3(params.subsurfaceColor.r, params.subsurfaceColor.g, params.subsurfaceColor.b) };
+            shader.uniforms.uNoiseComplexity = { value: params.noiseComplexity };
+            shader.uniforms.uNoiseScale = { value: params.noiseScale };
+            shader.uniforms.uDomainWarp = { value: params.domainWarp };
+            shader.uniforms.uNoiseType = { value: 0.0 }; // Will be updated based on selection                <div class="control-group">
+                    <label>Subsurface Scattering <span class="range-value" id="subsurface-value">0.30</span></label>
+                    <input type="range" id="subsurface" min="0" max="1" step="0.01" value="0.3">
+                </div>
+                <div class="control-group">
+                    <label>Subsurface Color</label>
+                    <input type="color" id="subsurfaceColor" value="#ff6b6b">
+                </div>                <div class="control-group">
+                    <label>Environment Style</label>
+                    <select id="envStyle">
+                        <option value="studio">Studio HDR</option>
+                        <option value="sunset">Sunset HDR</option>
+                        <option value="cosmic" selected>Cosmic HDR</option>
+                        <option value="minimal">Minimal</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Environment Rotation <span class="range-value" id="envRotation-value">0.00</span></label>
+                    <input type="range" id="envRotation" min="0" max="6.28" step="0.01" value="0">
+                </div>        // Extend parameters for advanced noise
+        params.bloomStrength = 1.5;
+        params.bloomThreshold = 0.8;
+        params.exposure = 2.0; // Increased initial exposure so blob is visible
+        params.envStyle = 'cosmic';
+        params.envRotation = 0;
+        params.subsurface = 0.3;
+        params.subsurfaceColor = { r: 1, g: 0.42, b: 0.42 }; // #ff6b6b
+        params.noiseType = 'banded';
+        params.noiseComplexity = 1.0;
+        params.noiseScale = 1.0;
+        params.domainWarp = 0.0;
+
+        // Initialize render targets resolution
+        bloomBlurMaterial.uniforms.resolution.value.set(Math.floor(window.innerWidth / 2), Math.floor(window.innerHeight / 2));                <div class="control-group">
+                    <label>Bloom Strength <span class="range-value" id="bloomStrength-value">1.50</span></label>
+                    <input type="range" id="bloomStrength" min="0" max="3" step="0.01" value="1.5">
+                </div>
+                <div class="control-group">
+                    <label>Bloom Threshold <span class="range-value" id="bloomThreshold-value">0.80</span></label>
+                    <input type="range" id="bloomThreshold" min="0" max="2" step="0.01" value="0.8">
+                </div>
+                <div class="control-group">
+                    <label>Exposure <span class="range-value" id="exposure-value">2.00</span></label>
+                    <input type="range" id="exposure" min="0.1" max="3" step="0.01" value="2.0">
+                </div><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Blob Generator</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #371b53;
+            font-family: Arial, sans-serif;
+        }
+        #container {
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        /* Control Panel Styles */
+        #controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 300px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 8px;
+            padding: 20px;
+            max-height: 90vh;
+            overflow-y: auto;
+            z-index: 1000;
+            font-size: 14px;
+            color: white;
+        }
+        
+        .control-section {
+            margin-bottom: 20px;
+            border: 1px solid #333;
+            border-radius: 6px;
+            background: rgba(20, 20, 20, 0.5);
+        }
+        
+        .section-header {
+            background: #2a2a2a;
+            padding: 12px 16px;
+            margin: 0;
+            border-radius: 6px 6px 0 0;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .section-content {
+            padding: 16px;
+            display: none;
+        }
+        
+        .section-content.expanded {
+            display: block;
+        }
+        
+        .control-group {
+            margin-bottom: 16px;
+        }
+        
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 12px;
+            color: #ccc;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            background: #333;
+            outline: none;
+            border-radius: 2px;
+            appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #00fff8;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: #00fff8;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .range-value {
+            float: right;
+            font-size: 11px;
+            color: #999;
+        }
+        
+        input[type="color"] {
+            width: 100%;
+            height: 32px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            z-index: 100;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">3D Blob Mixer - Click and drag to rotate</div>
+    <div id="container"></div>
+    
+    <div id="controls">
+        <!-- Blob Material Section -->
+        <div class="control-section">
+            <h3 class="section-header" onclick="toggleSection('blob-material')">
+                Blob Material <span>−</span>
+            </h3>
+            <div class="section-content expanded" id="blob-material">
+                <div class="control-group">
+                    <label>Color 1 (Cyan)</label>
+                    <input type="color" id="color1" value="#00fff8">
+                </div>
+                <div class="control-group">
+                    <label>Color 2 (Purple)</label>
+                    <input type="color" id="color2" value="#7800ff">
+                </div>
+                <div class="control-group">
+                    <label>Color 3 (White)</label>
+                    <input type="color" id="color3" value="#ffffff">
+                </div>
+                <div class="control-group">
+                    <label>Metalness <span class="range-value" id="metalness-value">1.00</span></label>
+                    <input type="range" id="metalness" min="0" max="1" step="0.01" value="1">
+                </div>
+                <div class="control-group">
+                    <label>Roughness <span class="range-value" id="roughness-value">0.36</span></label>
+                    <input type="range" id="roughness" min="0" max="1" step="0.01" value="0.36">
+                </div>
+                <div class="control-group">
+                    <label>Clearcoat <span class="range-value" id="clearcoat-value">1.00</span></label>
+                    <input type="range" id="clearcoat" min="0" max="1" step="0.01" value="1">
+                </div>
+                <div class="control-group">
+                    <label>IOR <span class="range-value" id="ior-value">2.33</span></label>
+                    <input type="range" id="ior" min="1" max="3" step="0.01" value="2.33">
+                </div>
+            </div>
+        </div>
+
+        <!-- Blob Noise Section -->
+        <div class="control-section">
+            <h3 class="section-header" onclick="toggleSection('blob-noise')">
+                Blob Noise <span>+</span>
+            </h3>
+            <div class="section-content" id="blob-noise">
+                <div class="control-group">
+                    <label>Frequency <span class="range-value" id="frequency-value">3.05</span></label>
+                    <input type="range" id="frequency" min="0.1" max="10" step="0.01" value="3.05">
+                </div>
+                <div class="control-group">
+                    <label>Num Waves <span class="range-value" id="numWaves-value">12.07</span></label>
+                    <input type="range" id="numWaves" min="1" max="30" step="0.01" value="12.07">
+                </div>
+                <div class="control-group">
+                    <label>Surface Distort <span class="range-value" id="surfaceDistort-value">1.40</span></label>
+                    <input type="range" id="surfaceDistort" min="0" max="3" step="0.01" value="1.4">
+                </div>
+                <div class="control-group">
+                    <label>Surface Frequency <span class="range-value" id="surfaceFrequency-value">1.74</span></label>
+                    <input type="range" id="surfaceFrequency" min="0.1" max="5" step="0.01" value="1.74">
+                </div>
+                <div class="control-group">
+                    <label>Speed <span class="range-value" id="speed-value">4.00</span></label>
+                    <input type="range" id="speed" min="0" max="10" step="0.1" value="4">
+                </div>
+                <div class="control-group">
+                    <label>Decay <span class="range-value" id="decay1-value">1.00</span></label>
+                    <input type="range" id="decay1" min="0.1" max="2" step="0.01" value="1">
+                </div>
+                <div class="control-group">
+                    <label>Angle 1 <span class="range-value" id="angle1-value">0.42</span></label>
+                    <input type="range" id="angle1" min="0" max="6.28" step="0.01" value="0.42">
+                </div>
+                <div class="control-group">
+                    <label>Angle 2 <span class="range-value" id="angle2-value">0.52</span></label>
+                    <input type="range" id="angle2" min="0" max="6.28" step="0.01" value="0.52">
+                </div>
+                <div class="control-group">
+                    <label>Angle 3 <span class="range-value" id="angle3-value">0.39</span></label>
+                    <input type="range" id="angle3" min="0" max="6.28" step="0.01" value="0.39">
+                </div>
+            </div>
+        </div>
+
+        <!-- Blob Geometry Section -->
+        <div class="control-section">
+            <h3 class="section-header" onclick="toggleSection('blob-geometry')">
+                Blob Geometry <span>+</span>
+            </h3>
+            <div class="section-content" id="blob-geometry">
+                <div class="control-group">
+                    <label>Scale <span class="range-value" id="scale-value">1.03</span></label>
+                    <input type="range" id="scale" min="0.1" max="3" step="0.01" value="1.03">
+                </div>
+                <div class="control-group">
+                    <label>Rotation Speed <span class="range-value" id="ry-value">3.16</span></label>
+                    <input type="range" id="ry" min="0" max="10" step="0.01" value="3.16">
+                </div>
+            </div>
+        </div>
+
+        <!-- Lighting Section -->
+        <div class="control-section">
+            <h3 class="section-header" onclick="toggleSection('lighting')">
+                Lighting <span>+</span>
+            </h3>
+            <div class="section-content" id="lighting">
+                <div class="control-group">
+                    <label>Ambient <span class="range-value" id="ambient-value">0.00</span></label>
+                    <input type="range" id="ambient" min="0" max="2" step="0.01" value="0">
+                </div>
+                <div class="control-group">
+                    <label>Env Map <span class="range-value" id="envMap-value">1.02</span></label>
+                    <input type="range" id="envMap" min="0" max="3" step="0.01" value="1.02">
+                </div>
+                <div class="control-group">
+                    <label>Light 1 Intensity <span class="range-value" id="int1-value">1.27</span></label>
+                    <input type="range" id="int1" min="0" max="5" step="0.01" value="1.27">
+                </div>
+                <div class="control-group">
+                    <label>Light 2 Intensity <span class="range-value" id="int2-value">3.00</span></label>
+                    <input type="range" id="int2" min="0" max="5" step="0.01" value="3">
+                </div>
+                <div class="control-group">
+                    <label>Light 3 Intensity <span class="range-value" id="int3-value">2.00</span></label>
+                    <input type="range" id="int3" min="0" max="5" step="0.01" value="2">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Toggle section visibility (simplified for single menu)
+        function toggleSection(sectionId) {
+            const content = document.getElementById(sectionId);
+            if (content) {
+                const header = content.previousElementSibling;
+                const icon = header ? header.querySelector('span') : null;
+                
+                if (content.classList.contains('expanded')) {
+                    content.classList.remove('expanded');
+                    if (icon) icon.textContent = '+';
+                } else {
+                    content.classList.add('expanded');
+                    if (icon) icon.textContent = '−';
+                }
+            }
+        }
+
+        // Update range value displays
+        function updateRangeValue(id, value) {
+            const valueElement = document.getElementById(id + '-value');
+            if (valueElement) {
+                valueElement.textContent = parseFloat(value).toFixed(2);
+            }
+        }
+
+        // Convert hex color to RGB object
+        function hexToRgb(hex) {
+            const r = parseInt(hex.slice(1, 3), 16) / 255;
+            const g = parseInt(hex.slice(3, 5), 16) / 255;
+            const b = parseInt(hex.slice(5, 7), 16) / 255;
+            return { r, g, b };
+        }
+
+        // Exact parameters from your reference URL
+        let params = {
+            ambient: 0,
+            angle1: 0.42,
+            angle2: 0.52,
+            angle3: 0.39,
+            ccRoughness: 0.63,
+            clearColor: '#371b53',
+            clearcoat: 1,
+            color1: { r: 0, g: 1, b: 0.97 },      // rgba(0,255,248,1) -> cyan
+            color2: { r: 0.47, g: 0, b: 1 },      // rgba(120,0,255,1) -> purple  
+            color3: { r: 1, g: 1, b: 1 },         // rgba(255,255,255,1) -> white
+            decay1: 1,
+            envMap: 1.02,
+            frequency: 3.05,
+            int1: 1.27,
+            int2: 3,
+            int3: 2,
+            ior: 2.33,
+            metalness: 1,
+            numWaves: 12.07,
+            roughness: 0.36,
+            ry: 3.16,
+            scale: 1.03,
+            speed: 4,
+            surfaceDistort: 1.4,
+            surfaceFrequency: 1.74,
+            surfacespeed: 1,
+            useGradient: true,
+            x1: -5, y1: 0.07, z1: 1.93,
+            x2: -2.73, y2: -6.67, z2: 5.73,
+            x3: 1.2, y3: 2.67, z3: 4.6
+        };
+
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(params.clearColor);
+        renderer.physicallyCorrectLights = true;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 2.0; // Match the initial params.exposure
+        document.getElementById('container').appendChild(renderer.domElement);
+
+        // Post-processing setup for bloom
+        const renderTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, {
+            minFilter: THREE.LinearFilter,
+            magFilter: THREE.LinearFilter,
+            format: THREE.RGBAFormat,
+            type: THREE.FloatType
+        });
+
+        const bloomRenderTarget = new THREE.WebGLRenderTarget(
+            Math.floor(window.innerWidth / 2),
+            Math.floor(window.innerHeight / 2),
+            {
+                minFilter: THREE.LinearFilter,
+                magFilter: THREE.LinearFilter,
+                format: THREE.RGBAFormat
+            }
+        );
+
+        // Bloom shader materials
+        const bloomExtractMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                tDiffuse: { value: null },
+                luminosityThreshold: { value: 0.8 },
+                smoothWidth: { value: 0.1 }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform sampler2D tDiffuse;
+                uniform float luminosityThreshold;
+                uniform float smoothWidth;
+                varying vec2 vUv;
+
+                void main() {
+                    vec4 texel = texture2D(tDiffuse, vUv);
+                    float luma = dot(texel.rgb, vec3(0.299, 0.587, 0.114));
+                    float alpha = smoothstep(luminosityThreshold, luminosityThreshold + smoothWidth, luma);
+                    gl_FragColor = vec4(texel.rgb * alpha, texel.a);
+                }
+            `
+        });
+
+        const bloomBlurMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                tDiffuse: { value: null },
+                resolution: { value: new THREE.Vector2() },
+                direction: { value: new THREE.Vector2(1, 0) }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform sampler2D tDiffuse;
+                uniform vec2 resolution;
+                uniform vec2 direction;
+                varying vec2 vUv;
+
+                void main() {
+                    vec2 invSize = 1.0 / resolution;
+                    vec4 color = vec4(0.0);
+                    
+                    // 9-tap gaussian blur
+                    color += texture2D(tDiffuse, vUv + direction * invSize * -4.0) * 0.0162162162;
+                    color += texture2D(tDiffuse, vUv + direction * invSize * -3.0) * 0.0540540541;
+                    color += texture2D(tDiffuse, vUv + direction * invSize * -2.0) * 0.1216216216;
+                    color += texture2D(tDiffuse, vUv + direction * invSize * -1.0) * 0.1945945946;
+                    color += texture2D(tDiffuse, vUv) * 0.2270270270;
+                    color += texture2D(tDiffuse, vUv + direction * invSize * 1.0) * 0.1945945946;
+                    color += texture2D(tDiffuse, vUv + direction * invSize * 2.0) * 0.1216216216;
+                    color += texture2D(tDiffuse, vUv + direction * invSize * 3.0) * 0.0540540541;
+                    color += texture2D(tDiffuse, vUv + direction * invSize * 4.0) * 0.0162162162;
+                    
+                    gl_FragColor = color;
+                }
+            `
+        });
+
+        const bloomCompositeMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                tDiffuse: { value: null },
+                tBloom: { value: null },
+                bloomStrength: { value: 1.5 },
+                exposure: { value: 1.0 }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform sampler2D tDiffuse;
+                uniform sampler2D tBloom;
+                uniform float bloomStrength;
+                uniform float exposure;
+                varying vec2 vUv;
+
+                void main() {
+                    vec4 base = texture2D(tDiffuse, vUv);
+                    vec4 bloom = texture2D(tBloom, vUv);
+                    
+                    vec3 color = base.rgb + bloom.rgb * bloomStrength;
+                    color *= exposure;
+                    
+                    // Tone mapping
+                    color = color / (color + vec3(1.0));
+                    
+                    gl_FragColor = vec4(color, base.a);
+                }
+            `
+        });
+
+        // Quad for post-processing
+        const postProcessQuad = new THREE.Mesh(
+            new THREE.PlaneGeometry(2, 2),
+            bloomExtractMaterial
+        );
+
+        const postProcessScene = new THREE.Scene();
+        postProcessScene.add(postProcessQuad);
+        const postProcessCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+        // Create simple environment for reflections
+        const scene2 = new THREE.Scene();
+        scene2.background = new THREE.Color(params.clearColor);
+        const pmremGenerator = new THREE.PMREMGenerator(renderer);
+        
+        // Create HDR-style environment map with multiple styles
+        function createHDREnvironmentMap(style = 'cosmic') {
+            const size = 512;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            let gradient, highlights, colorOverlay;
+            
+            switch(style) {
+                case 'studio':
+                    gradient = ctx.createLinearGradient(0, 0, 0, size);
+                    gradient.addColorStop(0, '#FFFFFF');
+                    gradient.addColorStop(0.3, '#F0F0F0');
+                    gradient.addColorStop(0.7, '#808080');
+                    gradient.addColorStop(1, '#404040');
+                    
+                    highlights = [
+                        { x: size * 0.3, y: size * 0.2, radius: 50, intensity: 1.0 },
+                        { x: size * 0.7, y: size * 0.3, radius: 30, intensity: 0.8 }
+                    ];
+                    break;
+                    
+                case 'sunset':
+                    gradient = ctx.createLinearGradient(0, 0, 0, size);
+                    gradient.addColorStop(0, '#FFE4B5');
+                    gradient.addColorStop(0.3, '#FFA500');
+                    gradient.addColorStop(0.6, '#FF6347');
+                    gradient.addColorStop(1, '#8B0000');
+                    
+                    highlights = [
+                        { x: size * 0.5, y: size * 0.1, radius: 60, intensity: 1.2 },
+                        { x: size * 0.2, y: size * 0.4, radius: 25, intensity: 0.9 }
+                    ];
+                    break;
+                    
+                case 'cosmic':
+                default:
+                    gradient = ctx.createLinearGradient(0, 0, 0, size);
+                    gradient.addColorStop(0, '#87CEEB');
+                    gradient.addColorStop(0.3, '#4682B4');
+                    gradient.addColorStop(0.5, '#2F4F4F');
+                    gradient.addColorStop(0.7, '#191970');
+                    gradient.addColorStop(1, '#000000');
+                    
+                    highlights = [
+                        { x: size * 0.2, y: size * 0.2, radius: 30, intensity: 0.8 },
+                        { x: size * 0.7, y: size * 0.3, radius: 20, intensity: 0.6 },
+                        { x: size * 0.5, y: size * 0.1, radius: 40, intensity: 1.0 },
+                        { x: size * 0.8, y: size * 0.6, radius: 15, intensity: 0.7 }
+                    ];
+                    break;
+                    
+                case 'minimal':
+                    gradient = ctx.createLinearGradient(0, 0, 0, size);
+                    gradient.addColorStop(0, '#F5F5F5');
+                    gradient.addColorStop(1, '#2C2C2C');
+                    
+                    highlights = [
+                        { x: size * 0.5, y: size * 0.3, radius: 40, intensity: 0.6 }
+                    ];
+                    break;
+            }
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Add bright highlights for HDR effect
+            highlights.forEach(light => {
+                const lightGradient = ctx.createRadialGradient(
+                    light.x, light.y, 0,
+                    light.x, light.y, light.radius
+                );
+                lightGradient.addColorStop(0, `rgba(255, 255, 255, ${light.intensity})`);
+                lightGradient.addColorStop(0.3, `rgba(255, 255, 200, ${light.intensity * 0.7})`);
+                lightGradient.addColorStop(0.6, `rgba(255, 200, 150, ${light.intensity * 0.4})`);
+                lightGradient.addColorStop(1, 'rgba(255, 200, 150, 0)');
+                
+                ctx.globalCompositeOperation = 'screen';
+                ctx.fillStyle = lightGradient;
+                ctx.fillRect(
+                    light.x - light.radius,
+                    light.y - light.radius,
+                    light.radius * 2,
+                    light.radius * 2
+                );
+            });
+            
+            // Add color variations for more interesting reflections
+            if (style === 'cosmic') {
+                ctx.globalCompositeOperation = 'overlay';
+                const colorGradient = ctx.createLinearGradient(0, 0, size, size);
+                colorGradient.addColorStop(0, 'rgba(0, 255, 248, 0.1)');   // Cyan tint
+                colorGradient.addColorStop(0.5, 'rgba(120, 0, 255, 0.1)'); // Purple tint
+                colorGradient.addColorStop(1, 'rgba(255, 255, 255, 0.1)'); // White tint
+                ctx.fillStyle = colorGradient;
+                ctx.fillRect(0, 0, size, size);
+            }
+            
+            return canvas;
+        }
+        
+        // Create cube environment map from HDR-style texture
+        function createCubeEnvironmentMap(style = 'cosmic', rotation = 0) {
+            const hdrCanvas = createHDREnvironmentMap(style);
+            const texture = new THREE.CanvasTexture(hdrCanvas);
+            texture.mapping = THREE.EquirectangularReflectionMapping;
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.offset.x = rotation / (Math.PI * 2);
+            texture.needsUpdate = true;
+            
+            // Generate PMREM (Pre-filtered Mipmap Radiance Environment Map)
+            const cubeTexture = pmremGenerator.fromEquirectangular(texture);
+            texture.dispose();
+            
+            return cubeTexture.texture;
+        }
+        
+        let envTexture = createCubeEnvironmentMap(params.envStyle, params.envRotation);
+        
+        // Function to update environment map
+        function updateEnvironmentMap() {
+            const oldTexture = envTexture;
+            envTexture = createCubeEnvironmentMap(params.envStyle, params.envRotation);
+            scene.environment = envTexture;
+            material.envMap = envTexture;
+            material.needsUpdate = true;
+            
+            // Dispose old texture
+            if (oldTexture) {
+                oldTexture.dispose();
+            }
+        }
+        
+        // Set scene environment
+        scene.environment = envTexture;
+
+        // Lighting setup using exact parameters
+        const ambientLight = new THREE.AmbientLight(0xffffff, params.ambient);
+        scene.add(ambientLight);
+
+        // Convert colors to hex for lights
+        const col1Hex = (Math.round(params.color1.r * 255) << 16) | (Math.round(params.color1.g * 255) << 8) | Math.round(params.color1.b * 255);
+        const col2Hex = (Math.round(params.color2.r * 255) << 16) | (Math.round(params.color2.g * 255) << 8) | Math.round(params.color2.b * 255);
+        const col3Hex = (Math.round(params.color3.r * 255) << 16) | (Math.round(params.color3.g * 255) << 8) | Math.round(params.color3.b * 255);
+
+        const light1 = new THREE.DirectionalLight(col1Hex, params.int1);
+        light1.position.set(params.x1, params.y1, params.z1);
+        scene.add(light1);
+
+        const light2 = new THREE.DirectionalLight(col2Hex, params.int2);
+        light2.position.set(params.x2, params.y2, params.z2);
+        scene.add(light2);
+
+        const light3 = new THREE.DirectionalLight(col3Hex, params.int3);
+        light3.position.set(params.x3, params.y3, params.z3);
+        scene.add(light3);
+
+        // Create geometry with exact segments
+        const geometry = new THREE.SphereGeometry(1, 64, 64);
+
+        // Create MeshPhysicalMaterial with exact parameters
+        let material = new THREE.MeshPhysicalMaterial({
+            color: new THREE.Color(1, 1, 1),
+            metalness: params.metalness,
+            roughness: params.roughness,
+            clearcoat: params.clearcoat,
+            clearcoatRoughness: params.ccRoughness,
+            ior: params.ior,
+            reflectivity: 1,
+            transmission: 0,
+            opacity: 1,
+            transparent: false,
+            envMap: envTexture,
+            envMapIntensity: params.envMap
+        });
+
+        // Store references to lights for updates
+        let lights = { light1, light2, light3, ambientLight };
+
+        // Apply shader modifications for displacement and gradient
+        material.onBeforeCompile = function(shader) {
+            // Add uniforms
+            shader.uniforms.uTime = { value: 0 };
+            shader.uniforms.uFrequency = { value: params.frequency };
+            shader.uniforms.uNumWaves = { value: params.numWaves };
+            shader.uniforms.uSurfaceDistort = { value: params.surfaceDistort };
+            shader.uniforms.uSurfaceFrequency = { value: params.surfaceFrequency };
+            shader.uniforms.uSurfaceSpeed = { value: params.surfacespeed };
+            shader.uniforms.uSpeed = { value: params.speed };
+            shader.uniforms.uAngle1 = { value: params.angle1 };
+            shader.uniforms.uAngle2 = { value: params.angle2 };
+            shader.uniforms.uAngle3 = { value: params.angle3 };
+            shader.uniforms.uDecay1 = { value: params.decay1 };
+            shader.uniforms.uColor1 = { value: new THREE.Vector3(params.color1.r, params.color1.g, params.color1.b) };
+            shader.uniforms.uColor2 = { value: new THREE.Vector3(params.color2.r, params.color2.g, params.color2.b) };
+            shader.uniforms.uColor3 = { value: new THREE.Vector3(params.color3.r, params.color3.g, params.color3.b) };
+            shader.uniforms.uUseGradient = { value: params.useGradient ? 1.0 : 0.0 };
+
+            // Add uniform declarations to vertex shader
+            shader.vertexShader = shader.vertexShader.replace(
+                '#include <common>',
+                `
+                #include <common>
+                uniform float uTime;
+                uniform float uFrequency;
+                uniform float uNumWaves;
+                uniform float uSurfaceDistort;
+                uniform float uSurfaceFrequency;
+                uniform float uSurfaceSpeed;
+                uniform float uSpeed;
+                uniform float uAngle1;
+                uniform float uAngle2;
+                uniform float uAngle3;
+                uniform float uDecay1;
+                uniform vec3 uColor1;
+                uniform vec3 uColor2;
+                uniform vec3 uColor3;
+                uniform float uUseGradient;
+                uniform float uSubsurface;
+                uniform vec3 uSubsurfaceColor;
+                uniform float uTranslucency;
+                uniform float uThickness;
+                
+                varying vec3 vWorldPos;
+                varying vec3 vLocalPos;
+                varying vec3 vWorldNormal;
+
+                // Banded noise for horizontal stripes like the reference
+                float bandedNoise(vec3 p, float frequency, float bands) {
+                    float bandPattern = sin(p.y * bands) * 0.5 + 0.5;
+                    float waveX = sin(p.y * frequency + p.x * 2.0) * 0.3;
+                    float waveZ = cos(p.y * frequency + p.z * 2.0) * 0.3;
+                    return bandPattern + waveX + waveZ;
+                }
+
+                float angularNoise(vec3 p, float period) {
+                    float cosA1 = cos(uAngle1), sinA1 = sin(uAngle1);
+                    float cosA2 = cos(uAngle2), sinA2 = sin(uAngle2);
+                    float cosA3 = cos(uAngle3), sinA3 = sin(uAngle3);
+                    
+                    vec3 rotated = vec3(
+                        p.x * cosA1 - p.z * sinA1,
+                        p.y * cosA2 - p.x * sinA2,
+                        p.z * cosA3 - p.y * sinA3
+                    );
+                    
+                    return bandedNoise(rotated, period, 8.0);
+                }
+
+                float multiOctaveNoise(vec3 p, float period) {
+                    float value = 0.0;
+                    float amplitude = 1.0;
+                    float frequency = period;
+                    
+                    // Primary banded pattern
+                    value += bandedNoise(p, frequency, uNumWaves) * amplitude;
+                    
+                    // Add detail octaves
+                    for(int i = 1; i < 4; i++) {
+                        frequency *= 2.0;
+                        amplitude *= 0.5 * uDecay1;
+                        value += angularNoise(p, frequency) * amplitude;
+                    }
+                    
+                    return value;
+                }
+                `
+            );
+
+            // Modify vertex position with exact displacement
+            shader.vertexShader = shader.vertexShader.replace(
+                '#include <begin_vertex>',
+                `
+                float time = uTime * uSpeed * 0.1;
+                vLocalPos = position;
+                
+                // Create displacement using exact parameters
+                float mainNoise = multiOctaveNoise(position + time, uFrequency);
+                float surfaceDetail = bandedNoise(position * uSurfaceFrequency + time * uSurfaceSpeed, 1.0, 12.0);
+                
+                // Combine displacement
+                float displacement = mainNoise * uSurfaceDistort * 0.05;
+                displacement += surfaceDetail * uSurfaceDistort * 0.03;
+                
+                vec3 transformed = position + normal * displacement;
+                vWorldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;
+                vWorldNormal = normalize(mat3(modelMatrix) * normal);
+                `
+            );
+
+            // Add gradient mapping to fragment shader
+            shader.fragmentShader = shader.fragmentShader.replace(
+                '#include <common>',
+                `
+                #include <common>
+                uniform float uUseGradient;
+                uniform vec3 uColor1;
+                uniform vec3 uColor2;
+                uniform vec3 uColor3;
+                uniform float uSubsurface;
+                uniform vec3 uSubsurfaceColor;
+                uniform float uTranslucency;
+                varying vec3 vWorldPos;
+                varying vec3 vLocalPos;
+                varying vec3 vWorldNormal;
+                
+                vec3 cosmicFusionGradient(vec3 localPos) {
+                    float gradientPos = (localPos.y + 1.0) * 0.5;
+                    gradientPos = clamp(gradientPos, 0.0, 1.0);
+                    
+                    vec3 color;
+                    if (gradientPos < 0.5) {
+                        float t = gradientPos * 2.0;
+                        color = mix(uColor1, uColor2, smoothstep(0.0, 1.0, t));
+                    } else {
+                        float t = (gradientPos - 0.5) * 2.0;
+                        color = mix(uColor2, uColor3, smoothstep(0.0, 1.0, t));
+                    }
+                    
+                    return color;
+                }
+                `
+            );
+
+            // Apply gradient and simple subsurface effect
+            shader.fragmentShader = shader.fragmentShader.replace(
+                '#include <color_fragment>',
+                `
+                #include <color_fragment>
+                if (uUseGradient > 0.5) {
+                    vec3 gradientColor = cosmicFusionGradient(vLocalPos);
+                    diffuseColor.rgb *= gradientColor;
+                }
+                
+                // Simple subsurface scattering effect
+                if (uSubsurface > 0.0) {
+                    vec3 viewDir = normalize(cameraPosition - vWorldPos);
+                    float fresnel = 1.0 - max(dot(viewDir, vWorldNormal), 0.0);
+                    vec3 subsurfaceEffect = mix(diffuseColor.rgb, uSubsurfaceColor, fresnel * uSubsurface);
+                    diffuseColor.rgb = mix(diffuseColor.rgb, subsurfaceEffect, 0.5);
+                }
+                `
+            );
+
+            material.userData.shader = shader;
+        };
+
+        // Create mesh
+        const blob = new THREE.Mesh(geometry, material);
+        blob.scale.setScalar(params.scale);
+        scene.add(blob);
+
+        // Position camera
+        camera.position.set(0, 0, 3);
+
+        // Mouse controls
+        let mouseX = 0, mouseY = 0, isMouseDown = false;
+        let targetRotationX = 0, targetRotationY = 0;
+
+        function onMouseMove(event) {
+            if (isMouseDown) {
+                const deltaX = event.clientX - mouseX;
+                const deltaY = event.clientY - mouseY;
+                targetRotationY += deltaX * 0.01;
+                targetRotationX += deltaY * 0.01;
+                targetRotationX = Math.max(-Math.PI/2, Math.min(Math.PI/2, targetRotationX));
+            }
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        }
+
+        function onMouseDown() { isMouseDown = true; }
+        function onMouseUp() { isMouseDown = false; }
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mousedown', onMouseDown);
+        document.addEventListener('mouseup', onMouseUp);
+
+        // Update function for real-time changes
+        function updateBlob() {
+            // Update material properties
+            if (material) {
+                material.metalness = params.metalness;
+                material.roughness = params.roughness;
+                material.clearcoat = params.clearcoat;
+                material.ior = params.ior;
+                material.envMapIntensity = params.envMap;
+            }
+            
+            // Update lighting
+            if (lights.ambientLight) lights.ambientLight.intensity = params.ambient;
+            if (lights.light1) lights.light1.intensity = params.int1;
+            if (lights.light2) lights.light2.intensity = params.int2;
+            if (lights.light3) lights.light3.intensity = params.int3;
+            
+            // Update light colors
+            if (lights.light1 && lights.light2 && lights.light3) {
+                const col1Hex = (Math.round(params.color1.r * 255) << 16) | (Math.round(params.color1.g * 255) << 8) | Math.round(params.color1.b * 255);
+                const col2Hex = (Math.round(params.color2.r * 255) << 16) | (Math.round(params.color2.g * 255) << 8) | Math.round(params.color2.b * 255);
+                const col3Hex = (Math.round(params.color3.r * 255) << 16) | (Math.round(params.color3.g * 255) << 8) | Math.round(params.color3.b * 255);
+                
+                lights.light1.color.setHex(col1Hex);
+                lights.light2.color.setHex(col2Hex);
+                lights.light3.color.setHex(col3Hex);
+            }
+            
+            // Update blob scale
+            if (blob) blob.scale.setScalar(params.scale);
+            
+            // Update shader uniforms if available
+            if (material && material.userData && material.userData.shader) {
+                const shader = material.userData.shader;
+                try {
+                    if (shader.uniforms.uFrequency) shader.uniforms.uFrequency.value = params.frequency;
+                    if (shader.uniforms.uNumWaves) shader.uniforms.uNumWaves.value = params.numWaves;
+                    if (shader.uniforms.uSurfaceDistort) shader.uniforms.uSurfaceDistort.value = params.surfaceDistort;
+                    if (shader.uniforms.uSurfaceFrequency) shader.uniforms.uSurfaceFrequency.value = params.surfaceFrequency;
+                    if (shader.uniforms.uSpeed) shader.uniforms.uSpeed.value = params.speed;
+                    if (shader.uniforms.uAngle1) shader.uniforms.uAngle1.value = params.angle1;
+                    if (shader.uniforms.uAngle2) shader.uniforms.uAngle2.value = params.angle2;
+                    if (shader.uniforms.uAngle3) shader.uniforms.uAngle3.value = params.angle3;
+                    if (shader.uniforms.uDecay1) shader.uniforms.uDecay1.value = params.decay1;
+                    if (shader.uniforms.uColor1) shader.uniforms.uColor1.value.set(params.color1.r, params.color1.g, params.color1.b);
+                    if (shader.uniforms.uColor2) shader.uniforms.uColor2.value.set(params.color2.r, params.color2.g, params.color2.b);
+                    if (shader.uniforms.uColor3) shader.uniforms.uColor3.value.set(params.color3.r, params.color3.g, params.color3.b);
+                    if (shader.uniforms.uSubsurface) shader.uniforms.uSubsurface.value = params.subsurface;
+                    if (shader.uniforms.uSubsurfaceColor) shader.uniforms.uSubsurfaceColor.value.set(params.subsurfaceColor.r, params.subsurfaceColor.g, params.subsurfaceColor.b);
+                    if (shader.uniforms.uNoiseComplexity) shader.uniforms.uNoiseComplexity.value = params.noiseComplexity;
+                    if (shader.uniforms.uNoiseScale) shader.uniforms.uNoiseScale.value = params.noiseScale;
+                    if (shader.uniforms.uDomainWarp) shader.uniforms.uDomainWarp.value = params.domainWarp;
+                    
+                    // Update noise type
+                    if (shader.uniforms.uNoiseType) {
+                        const noiseTypeValue = {
+                            'banded': 0.0,
+                            'worley': 1.0,
+                            'curl': 2.0,
+                            'fbm': 3.0,
+                            'mixed': 4.0
+                        }[params.noiseType] || 0.0;
+                        shader.uniforms.uNoiseType.value = noiseTypeValue;
+                    }
+                } catch (e) {
+                    console.warn('Shader uniform update failed:', e);
+                }
+            }
+        }
+
+        // Add event listeners to all controls
+        function setupControls() {
+            // Range sliders
+            const rangeControls = [
+                'metalness', 'roughness', 'clearcoat', 'ior', 'envMap', 'ambient',
+                'frequency', 'numWaves', 'surfaceDistort', 'surfaceFrequency', 'speed',
+                'decay1', 'angle1', 'angle2', 'angle3', 'scale', 'ry',
+                'int1', 'int2', 'int3', 'bloomStrength', 'bloomThreshold', 'exposure',
+                'envRotation', 'subsurface', 'noiseComplexity', 'noiseScale', 'domainWarp'
+            ];
+            
+            rangeControls.forEach(control => {
+                const element = document.getElementById(control);
+                if (element) {
+                    element.addEventListener('input', function() {
+                        params[control] = parseFloat(this.value);
+                        updateRangeValue(control, this.value);
+                        updateBlob();
+                        
+                        // Update environment map if rotation changed
+                        if (control === 'envRotation') {
+                            updateEnvironmentMap();
+                        }
+                    });
+                }
+            });
+            
+            // Environment style selector
+            const envStyleElement = document.getElementById('envStyle');
+            if (envStyleElement) {
+                envStyleElement.addEventListener('change', function() {
+                    params.envStyle = this.value;
+                    updateEnvironmentMap();
+                });
+            }
+            
+            // Noise type selector
+            const noiseTypeElement = document.getElementById('noiseType');
+            if (noiseTypeElement) {
+                noiseTypeElement.addEventListener('change', function() {
+                    params.noiseType = this.value;
+                    updateBlob();
+                });
+            }
+            
+            // Color controls
+            const colorControls = ['color1', 'color2', 'color3', 'subsurfaceColor'];
+            colorControls.forEach(control => {
+                const element = document.getElementById(control);
+                if (element) {
+                    element.addEventListener('input', function() {
+                        params[control] = hexToRgb(this.value);
+                        updateBlob();
+                    });
+                }
+            });
+        }
+
+        // Handle window resize
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            
+            // Update render targets
+            renderTarget.setSize(window.innerWidth, window.innerHeight);
+            bloomRenderTarget.setSize(Math.floor(window.innerWidth / 2), Math.floor(window.innerHeight / 2));
+            bloomBlurMaterial.uniforms.resolution.value.set(Math.floor(window.innerWidth / 2), Math.floor(window.innerHeight / 2));
+        }
+        window.addEventListener('resize', onWindowResize);
+
+        // Animation loop with bloom post-processing
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Update time uniform
+            const time = performance.now() * 0.001;
+            if (material && material.userData && material.userData.shader) {
+                try {
+                    material.userData.shader.uniforms.uTime.value = time;
+                } catch (e) {
+                    // Ignore shader errors during updates
+                }
+            }
+            
+            // Smooth rotation
+            if (blob) {
+                blob.rotation.x += (targetRotationX - blob.rotation.x) * 0.1;
+                blob.rotation.y += (targetRotationY - blob.rotation.y) * 0.1;
+                
+                // Auto rotation when not interacting
+                if (!isMouseDown) {
+                    blob.rotation.y += params.ry * 0.0005;
+                }
+            }
+            
+            try {
+                // Render scene to texture
+                renderer.setRenderTarget(renderTarget);
+                renderer.render(scene, camera);
+                
+                // Extract bright areas
+                postProcessQuad.material = bloomExtractMaterial;
+                bloomExtractMaterial.uniforms.tDiffuse.value = renderTarget.texture;
+                bloomExtractMaterial.uniforms.luminosityThreshold.value = params.bloomThreshold;
+                
+                renderer.setRenderTarget(bloomRenderTarget);
+                renderer.render(postProcessScene, postProcessCamera);
+                
+                // Horizontal blur
+                postProcessQuad.material = bloomBlurMaterial;
+                bloomBlurMaterial.uniforms.tDiffuse.value = bloomRenderTarget.texture;
+                bloomBlurMaterial.uniforms.direction.value.set(1, 0);
+                bloomBlurMaterial.uniforms.resolution.value.set(bloomRenderTarget.width, bloomRenderTarget.height);
+                
+                const tempTarget = bloomRenderTarget.clone();
+                renderer.setRenderTarget(tempTarget);
+                renderer.render(postProcessScene, postProcessCamera);
+                
+                // Vertical blur
+                bloomBlurMaterial.uniforms.tDiffuse.value = tempTarget.texture;
+                bloomBlurMaterial.uniforms.direction.value.set(0, 1);
+                
+                renderer.setRenderTarget(bloomRenderTarget);
+                renderer.render(postProcessScene, postProcessCamera);
+                
+                // Composite final result
+                postProcessQuad.material = bloomCompositeMaterial;
+                bloomCompositeMaterial.uniforms.tDiffuse.value = renderTarget.texture;
+                bloomCompositeMaterial.uniforms.tBloom.value = bloomRenderTarget.texture;
+                bloomCompositeMaterial.uniforms.bloomStrength.value = params.bloomStrength;
+                bloomCompositeMaterial.uniforms.exposure.value = params.exposure;
+                
+                renderer.setRenderTarget(null);
+                renderer.render(postProcessScene, postProcessCamera);
+                
+                // Dispose temp target
+                tempTarget.dispose();
+            } catch (e) {
+                // Fallback to simple rendering if post-processing fails
+                renderer.setRenderTarget(null);
+                renderer.render(scene, camera);
+            }
+        }
+        
+        // Initialize controls when page loads
+        setupControls();
+        animate();
+    </script>
+</body>
+</html>
