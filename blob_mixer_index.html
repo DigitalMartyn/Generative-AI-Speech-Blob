@@ -182,6 +182,14 @@
                     <label>IOR <span class="range-value" id="ior-value">2.33</span></label>
                     <input type="range" id="ior" min="1" max="3" step="0.01" value="2.33">
                 </div>
+                <div class="control-group">
+                    <label>Subsurface Scattering <span class="range-value" id="subsurface-value">0.30</span></label>
+                    <input type="range" id="subsurface" min="0" max="1" step="0.01" value="0.3">
+                </div>
+                <div class="control-group">
+                    <label>Subsurface Color</label>
+                    <input type="color" id="subsurfaceColor" value="#ff6b6b">
+                </div>
             </div>
         </div>
 
@@ -191,6 +199,28 @@
                 Blob Noise <span>+</span>
             </h3>
             <div class="section-content" id="blob-noise">
+                <div class="control-group">
+                    <label>Noise Type</label>
+                    <select id="noiseType">
+                        <option value="banded" selected>Banded (Original)</option>
+                        <option value="worley">Worley/Voronoi</option>
+                        <option value="curl">Curl Noise</option>
+                        <option value="fbm">Fractal Brownian Motion</option>
+                        <option value="mixed">Mixed Complex</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Noise Complexity <span class="range-value" id="noiseComplexity-value">1.00</span></label>
+                    <input type="range" id="noiseComplexity" min="0.1" max="3" step="0.01" value="1">
+                </div>
+                <div class="control-group">
+                    <label>Noise Scale <span class="range-value" id="noiseScale-value">1.00</span></label>
+                    <input type="range" id="noiseScale" min="0.1" max="5" step="0.01" value="1">
+                </div>
+                <div class="control-group">
+                    <label>Domain Warp <span class="range-value" id="domainWarp-value">0.00</span></label>
+                    <input type="range" id="domainWarp" min="0" max="2" step="0.01" value="0">
+                </div>
                 <div class="control-group">
                     <label>Frequency <span class="range-value" id="frequency-value">3.05</span></label>
                     <input type="range" id="frequency" min="0.1" max="10" step="0.01" value="3.05">
@@ -227,6 +257,14 @@
                     <label>Angle 3 <span class="range-value" id="angle3-value">0.39</span></label>
                     <input type="range" id="angle3" min="0" max="6.28" step="0.01" value="0.39">
                 </div>
+                <div class="control-group">
+                    <label>Surface Pole Amount <span class="range-value" id="surfPoleAmount-value">1.00</span></label>
+                    <input type="range" id="surfPoleAmount" min="0" max="2" step="0.01" value="1">
+                </div>
+                <div class="control-group">
+                    <label>Distort <span class="range-value" id="distort-value">0.00</span></label>
+                    <input type="range" id="distort" min="0" max="2" step="0.01" value="0">
+                </div>
             </div>
         </div>
 
@@ -243,6 +281,28 @@
                 <div class="control-group">
                     <label>Rotation Speed <span class="range-value" id="ry-value">3.16</span></label>
                     <input type="range" id="ry" min="0" max="10" step="0.01" value="3.16">
+                </div>
+            </div>
+        </div>
+
+        <!-- Environment Section -->
+        <div class="control-section">
+            <h3 class="section-header" onclick="toggleSection('environment')">
+                Environment <span>+</span>
+            </h3>
+            <div class="section-content" id="environment">
+                <div class="control-group">
+                    <label>Environment Style</label>
+                    <select id="envStyle">
+                        <option value="studio">Studio HDR</option>
+                        <option value="sunset">Sunset HDR</option>
+                        <option value="cosmic" selected>Cosmic HDR</option>
+                        <option value="minimal">Minimal</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Environment Rotation <span class="range-value" id="envRotation-value">0.00</span></label>
+                    <input type="range" id="envRotation" min="0" max="6.28" step="0.01" value="0">
                 </div>
             </div>
         </div>
@@ -364,7 +424,7 @@
                 return { r, g, b };
             }
 
-            // Parameters from reference
+            // Parameters from reference - complete set
             let params = {
                 ambient: 0,
                 angle1: 0.42,
@@ -407,6 +467,18 @@
                 // Penumbra controls
                 penum1: 0.66,
                 penum3: 1,
+                // Advanced controls that were missing
+                subsurface: 0.3,
+                subsurfaceColor: { r: 1, g: 0.42, b: 0.42 }, // #ff6b6b
+                noiseType: 'banded',
+                noiseComplexity: 1.0,
+                noiseScale: 1.0,
+                domainWarp: 0.0,
+                surfPoleAmount: 1,
+                distort: 0,
+                envStyle: 'cosmic',
+                envRotation: 0,
+                // Post-processing
                 bloomStrength: 1.5,
                 bloomThreshold: 0.8,
                 exposure: 2.0
@@ -428,20 +500,43 @@
 
             console.log('Renderer initialized');
 
-            // Simple environment
+            // Simple environment with multiple styles
             const pmremGenerator = new THREE.PMREMGenerator(renderer);
             
-            function createSimpleEnvironment() {
+            function createSimpleEnvironment(style = 'cosmic') {
                 const size = 512;
                 const canvas = document.createElement('canvas');
                 canvas.width = size;
                 canvas.height = size;
                 const ctx = canvas.getContext('2d');
                 
-                const gradient = ctx.createLinearGradient(0, 0, 0, size);
-                gradient.addColorStop(0, '#87CEEB');
-                gradient.addColorStop(0.5, '#4682B4');
-                gradient.addColorStop(1, '#191970');
+                let gradient;
+                switch(style) {
+                    case 'studio':
+                        gradient = ctx.createLinearGradient(0, 0, 0, size);
+                        gradient.addColorStop(0, '#FFFFFF');
+                        gradient.addColorStop(0.5, '#F0F0F0');
+                        gradient.addColorStop(1, '#808080');
+                        break;
+                    case 'sunset':
+                        gradient = ctx.createLinearGradient(0, 0, 0, size);
+                        gradient.addColorStop(0, '#FFE4B5');
+                        gradient.addColorStop(0.5, '#FFA500');
+                        gradient.addColorStop(1, '#8B0000');
+                        break;
+                    case 'minimal':
+                        gradient = ctx.createLinearGradient(0, 0, 0, size);
+                        gradient.addColorStop(0, '#F5F5F5');
+                        gradient.addColorStop(1, '#2C2C2C');
+                        break;
+                    case 'cosmic':
+                    default:
+                        gradient = ctx.createLinearGradient(0, 0, 0, size);
+                        gradient.addColorStop(0, '#87CEEB');
+                        gradient.addColorStop(0.5, '#4682B4');
+                        gradient.addColorStop(1, '#191970');
+                        break;
+                }
                 
                 ctx.fillStyle = gradient;
                 ctx.fillRect(0, 0, size, size);
@@ -449,15 +544,37 @@
                 return canvas;
             }
             
-            const envCanvas = createSimpleEnvironment();
-            const envTexture = new THREE.CanvasTexture(envCanvas);
+            let envCanvas = createSimpleEnvironment(params.envStyle);
+            let envTexture = new THREE.CanvasTexture(envCanvas);
             envTexture.mapping = THREE.EquirectangularReflectionMapping;
-            const cubeTexture = pmremGenerator.fromEquirectangular(envTexture);
+            let cubeTexture = pmremGenerator.fromEquirectangular(envTexture);
             scene.environment = cubeTexture.texture;
+            
+            function updateEnvironment() {
+                const oldCanvas = envCanvas;
+                const oldTexture = envTexture;
+                const oldCubeTexture = cubeTexture;
+                
+                envCanvas = createSimpleEnvironment(params.envStyle);
+                envTexture = new THREE.CanvasTexture(envCanvas);
+                envTexture.mapping = THREE.EquirectangularReflectionMapping;
+                envTexture.offset.x = params.envRotation / (Math.PI * 2);
+                cubeTexture = pmremGenerator.fromEquirectangular(envTexture);
+                scene.environment = cubeTexture.texture;
+                
+                if (material) {
+                    material.envMap = cubeTexture.texture;
+                    material.needsUpdate = true;
+                }
+                
+                // Dispose old resources
+                oldTexture.dispose();
+                oldCubeTexture.texture.dispose();
+            }
 
             console.log('Environment created');
 
-            // Lighting setup with all 5 lights from reference
+            // Lighting setup with all 5 lights from reference - using PointLights for accurate positioning
             const ambientLight = new THREE.AmbientLight(0xffffff, params.ambient);
             scene.add(ambientLight);
 
@@ -466,29 +583,29 @@
             const col2Hex = (Math.round(params.color2.r * 255) << 16) | (Math.round(params.color2.g * 255) << 8) | Math.round(params.color2.b * 255);
             const col3Hex = (Math.round(params.color3.r * 255) << 16) | (Math.round(params.color3.g * 255) << 8) | Math.round(params.color3.b * 255);
 
-            // Light 1 - Cyan color
-            const light1 = new THREE.DirectionalLight(col1Hex, params.int1);
+            // Light 1 - Cyan color, positioned left-back
+            const light1 = new THREE.PointLight(col1Hex, params.int1, params.dist1);
             light1.position.set(params.x1, params.y1, params.z1);
             scene.add(light1);
 
-            // Light 2 - Purple color  
-            const light2 = new THREE.DirectionalLight(col2Hex, params.int2);
+            // Light 2 - Purple color, positioned below-left-front
+            const light2 = new THREE.PointLight(col2Hex, params.int2, params.dist2);
             light2.position.set(params.x2, params.y2, params.z2);
             scene.add(light2);
 
-            // Light 3 - White color
-            const light3 = new THREE.DirectionalLight(col3Hex, params.int3);
+            // Light 3 - White color, positioned upper-right-front (main key light)
+            const light3 = new THREE.PointLight(col3Hex, params.int3, params.dist3);
             light3.position.set(params.x3, params.y3, params.z3);
             scene.add(light3);
 
             // Light 4 - Additional light (intensity 0 in reference, but positioned)
-            const light4 = new THREE.DirectionalLight(col1Hex, params.int4);
+            const light4 = new THREE.PointLight(col1Hex, params.int4, 10);
             light4.position.set(params.x4, params.y4, params.z4);
             scene.add(light4);
 
-            // Light 5 - Additional light with some intensity
-            const light5 = new THREE.DirectionalLight(col2Hex, params.int5);
-            light5.position.set(0, 0, params.z5); // Only Z position specified in reference
+            // Light 5 - Additional light with some intensity, positioned behind
+            const light5 = new THREE.PointLight(col2Hex, params.int5, 10);
+            light5.position.set(0, 0, params.z5);
             scene.add(light5);
 
             // Store all lights for updates
@@ -496,8 +613,8 @@
 
             console.log('Lights created');
 
-            // Geometry and material
-            const geometry = new THREE.SphereGeometry(1, 64, 64);
+            // Create geometry with higher resolution to show the bands clearly
+            const geometry = new THREE.SphereGeometry(1, 128, 128);
             const material = new THREE.MeshPhysicalMaterial({
                 color: new THREE.Color(1, 1, 1),
                 metalness: params.metalness,
@@ -553,10 +670,19 @@
                     varying vec3 vLocalPos;
 
                     float bandedNoise(vec3 p, float frequency, float bands) {
-                        float bandPattern = sin(p.y * bands) * 0.5 + 0.5;
-                        float waveX = sin(p.y * frequency + p.x * 2.0) * 0.3;
-                        float waveZ = cos(p.y * frequency + p.z * 2.0) * 0.3;
-                        return bandPattern + waveX + waveZ;
+                        // Create much stronger horizontal banding like the reference
+                        float y = p.y;
+                        
+                        // Primary banded pattern with sharp transitions
+                        float bandPattern = sin(y * bands * 2.0);
+                        bandPattern = smoothstep(-0.3, 0.3, bandPattern); // Sharper bands
+                        
+                        // Add wave modulation for the characteristic look
+                        float waveX = sin(y * frequency + p.x * 3.0) * 0.4;
+                        float waveZ = cos(y * frequency + p.z * 3.0) * 0.4;
+                        
+                        // Combine with stronger amplitude
+                        return (bandPattern + waveX + waveZ) * 1.5;
                     }
 
                     float angularNoise(vec3 p, float period) {
@@ -564,13 +690,14 @@
                         float cosA2 = cos(uAngle2), sinA2 = sin(uAngle2);
                         float cosA3 = cos(uAngle3), sinA3 = sin(uAngle3);
                         
+                        // Apply rotations for angular variation
                         vec3 rotated = vec3(
                             p.x * cosA1 - p.z * sinA1,
                             p.y * cosA2 - p.x * sinA2,
                             p.z * cosA3 - p.y * sinA3
                         );
                         
-                        return bandedNoise(rotated, period, 8.0);
+                        return bandedNoise(rotated, period, uNumWaves * 0.5);
                     }
 
                     float multiOctaveNoise(vec3 p, float period) {
@@ -578,11 +705,13 @@
                         float amplitude = 1.0;
                         float frequency = period;
                         
-                        value += bandedNoise(p, frequency, uNumWaves) * amplitude;
+                        // Primary banded pattern - much stronger
+                        value += bandedNoise(p, frequency, uNumWaves) * amplitude * 2.0;
                         
-                        for(int i = 1; i < 4; i++) {
+                        // Add detail octaves with proper decay
+                        for(int i = 1; i < 3; i++) {
                             frequency *= 2.0;
-                            amplitude *= 0.5 * uDecay1;
+                            amplitude *= uDecay1 * 0.3;
                             value += angularNoise(p, frequency) * amplitude;
                         }
                         
@@ -597,11 +726,13 @@
                     float time = uTime * uSpeed * 0.1;
                     vLocalPos = position;
                     
+                    // Create much stronger displacement to match reference
                     float mainNoise = multiOctaveNoise(position + time, uFrequency);
-                    float surfaceDetail = bandedNoise(position * uSurfaceFrequency + time, 1.0, 12.0);
+                    float surfaceDetail = bandedNoise(position * uSurfaceFrequency + time, 1.0, uNumWaves);
                     
-                    float displacement = mainNoise * uSurfaceDistort * 0.05;
-                    displacement += surfaceDetail * uSurfaceDistort * 0.03;
+                    // Increase displacement amplitude significantly
+                    float displacement = mainNoise * uSurfaceDistort * 0.15; // 3x stronger
+                    displacement += surfaceDetail * uSurfaceDistort * 0.08; // More surface detail
                     
                     vec3 transformed = position + normal * displacement;
                     `
@@ -740,14 +871,15 @@
                 }
             }
 
-            // Setup controls
+            // Setup controls - complete list
             function setupControls() {
                 const rangeControls = [
                     'metalness', 'roughness', 'clearcoat', 'ior', 'envMap', 'ambient',
                     'frequency', 'numWaves', 'surfaceDistort', 'surfaceFrequency', 'speed',
                     'decay1', 'angle1', 'angle2', 'angle3', 'scale', 'ry',
                     'int1', 'int2', 'int3', 'int4', 'int5', 'bloomStrength', 'bloomThreshold', 'exposure',
-                    'dist1', 'dist2', 'dist3', 'penum1', 'penum3'
+                    'dist1', 'dist2', 'dist3', 'penum1', 'penum3', 'subsurface',
+                    'noiseComplexity', 'noiseScale', 'domainWarp', 'surfPoleAmount', 'distort', 'envRotation'
                 ];
                 
                 rangeControls.forEach(control => {
@@ -762,7 +894,7 @@
                 });
                 
                 // Color controls
-                const colorControls = ['color1', 'color2', 'color3'];
+                const colorControls = ['color1', 'color2', 'color3', 'subsurfaceColor'];
                 colorControls.forEach(control => {
                     const element = document.getElementById(control);
                     if (element) {
@@ -772,6 +904,23 @@
                         });
                     }
                 });
+                
+                // Dropdown controls
+                const noiseTypeElement = document.getElementById('noiseType');
+                if (noiseTypeElement) {
+                    noiseTypeElement.addEventListener('change', function() {
+                        params.noiseType = this.value;
+                        updateBlob();
+                    });
+                }
+                
+                const envStyleElement = document.getElementById('envStyle');
+                if (envStyleElement) {
+                    envStyleElement.addEventListener('change', function() {
+                        params.envStyle = this.value;
+                        updateEnvironment();
+                    });
+                }
             }
 
             // Window resize
