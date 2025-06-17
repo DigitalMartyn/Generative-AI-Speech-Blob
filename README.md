@@ -1,135 +1,255 @@
 # 3D Blob Generator
 
-An interactive 3D blob generator built with Three.js featuring real-time material controls, advanced noise systems, dynamic lighting, and post-processing effects.
+An interactive 3D blob generator built with Three.js featuring real-time material controls, advanced noise systems, dynamic lighting, post-processing effects, and a comprehensive preset management system.
 
-![3D Blob Generator](https://img.shields.io/badge/Three.js-r128-green) ![License](https://img.shields.io/badge/license-MIT-blue)
+![3D Blob Generator](https://img.shields.io/badge/Three.js-r128-green) ![License](https://img.shields.io/badge/license-MIT-blue) ![Presets](https://img.shields.io/badge/presets-exportable-orange)
 
-## Features
+## ✨ Features
 
-- **Real-time Material Controls**: Adjust metalness, roughness, clearcoat, and IOR for physically-based rendering
-- **Advanced Noise System**: Multiple octave noise with configurable frequency, waves, and angular displacement
-- **Dynamic Lighting**: Three-light setup with customizable intensities and colors
-- **Interactive Controls**: Mouse-controlled rotation with smooth interpolation
-- **Post-Processing**: Bloom effects and exposure control
-- **Responsive Design**: Collapsible control panels with organized sections
+### 🎨 **Real-time Material Controls**
+- **Physically-Based Rendering** with metalness, roughness, clearcoat, and IOR
+- **Dynamic color gradients** with three-color mixing system
+- **Subsurface scattering** for translucent effects
+- **Environmental reflections** with multiple HDR styles
 
-## Usage
+### 🌊 **Advanced Noise System**
+- **Multiple noise types**: Banded, Worley/Voronoi, Curl Noise, FBM, Mixed Complex
+- **Multi-octave displacement** with configurable frequency and amplitude
+- **Angular rotation controls** for unique surface patterns
+- **Domain warping** for complex distortions
+- **Surface pole control** for natural deformation
 
-### Quick Start
-1. Open `index.html` in a web browser
-2. Use the control panels on the right to adjust blob properties
-3. Click and drag to rotate the blob
-4. Experiment with different settings to create unique blob shapes
+### 💡 **Dynamic Lighting**
+- **5-light setup** with individual intensity and distance controls
+- **PointLight system** with realistic falloff and shadows
+- **Color-matched lighting** that follows gradient colors
+- **Penumbra controls** for soft shadow edges
 
-### Local Development
+### 🎮 **Interactive Controls**
+- **Voice assistant-style UI** with glassmorphism design
+- **Mouse-controlled rotation** with smooth interpolation
+- **Play/pause animation** with visual feedback
+- **Collapsible control panels** for clean viewing
+
+### 🎯 **Preset Management**
+- **Built-in presets**: Purple Rain, Iridescent, Pink Floyd
+- **Save custom presets** with user-defined names
+- **Export/Import system** for sharing configurations
+- **Session persistence** with JSON file support
+
+### ⚡ **Post-Processing**
+- **Bloom effects** with adjustable strength and threshold
+- **Exposure control** for HDR-like appearance
+- **Multiple environment styles** (Studio, Sunset, Cosmic, Minimal)
+
+## 🚀 Quick Start
+
+### **Option 1: Direct Use**
+1. Open `index.html` in a modern web browser
+2. Click the **⚙** button to open controls
+3. Experiment with the presets in the dropdown
+4. Adjust parameters in real-time
+
+### **Option 2: Local Development**
 ```bash
-# Serve with Python (recommended for local development)
+# Clone the repository
+git clone https://github.com/yourusername/blob-mixer.git
+cd blob-mixer
+
+# Serve locally (recommended)
 python -m http.server 8000
+# or
+npx http-server -p 8000
 
-# Or with Node.js
-npx http-server
-
-# Then visit http://localhost:8000
+# Visit http://localhost:8000
 ```
 
-## Controls
+## 🎛 Controls Guide
 
-### Blob Material
-- **Colors**: Three-color gradient system (Cyan, Purple, White)
-- **Metalness**: Controls metallic appearance (0-1)
-- **Roughness**: Surface roughness for reflections (0-1)
-- **Clearcoat**: Clear coating layer intensity (0-1)
-- **IOR**: Index of refraction for realistic glass/water effects (1-3)
+### **Bottom Panel (Voice Assistant Style)**
+- **× (Close)** - Reset camera view to default position
+- **🎙 (Microphone)** - Toggle animation play/pause
+- **⚙ (Settings)** - Open/close the control panels
 
-### Blob Noise
-- **Frequency**: Base noise frequency for surface deformation
-- **Num Waves**: Number of wave bands in the noise pattern
-- **Surface Distort**: Overall distortion intensity
-- **Surface Frequency**: Detail noise frequency
-- **Speed**: Animation speed
-- **Decay**: Amplitude decay between octaves
-- **Angles 1-3**: Rotational offsets for noise layers
+### **Control Panels**
+#### **Presets**
+- **Choose from built-in presets** or create custom ones
+- **Save current settings** with custom names
+- **Export/Import** preset collections as JSON files
 
-### Blob Geometry
-- **Scale**: Overall size of the blob
-- **Rotation Speed**: Auto-rotation speed when not interacting
+#### **Blob Material**
+- **Colors**: Three-color gradient system
+- **Material Properties**: Metalness, roughness, clearcoat, IOR
+- **Subsurface Effects**: Scattering intensity and color
 
-### Lighting
-- **Ambient**: Global ambient light intensity
-- **Env Map**: Environment map reflection intensity
-- **Light 1-3**: Individual directional light intensities
+#### **Blob Noise**
+- **Noise Type**: Switch between different algorithms
+- **Surface Controls**: Distortion, frequency, wave count
+- **Animation**: Speed, decay, angular offsets
 
-### Post-Processing
-- **Bloom Strength**: Intensity of the bloom effect
-- **Bloom Threshold**: Brightness threshold for bloom
-- **Exposure**: Overall scene exposure
+#### **Environment & Lighting**
+- **Environment Styles**: Studio, Sunset, Cosmic, Minimal
+- **5-Light System**: Individual intensity and distance controls
+- **Ambient & Reflection**: Global lighting settings
 
-## Technical Details
+#### **Post-Processing**
+- **Bloom**: Strength and threshold for glow effects
+- **Exposure**: HDR-style brightness control
 
-### Built With
-- **Three.js r128**: 3D graphics library
-- **WebGL**: Hardware-accelerated rendering
-- **GLSL Shaders**: Custom vertex and fragment shaders for noise generation
+## 🎨 Preset Gallery
 
-### Shader Features
-- Multi-octave banded noise generation
-- Angular noise rotation
-- Physically-based material properties
-- Gradient color mapping
-- Real-time displacement
+### **Purple Rain** (Default)
+- Dark purple cosmic background
+- Cyan-to-purple-to-white gradient
+- Metallic surface with strong reflections
+- Classic horizontal banding pattern
 
-### Browser Support
-- Chrome 60+
-- Firefox 55+
-- Safari 12+
-- Edge 79+
+### **Iridescent**
+- Light blue-cyan background
+- Blue-to-yellow-to-purple gradient
+- Glass-like transparency effects
+- High surface distortion for dramatic ridges
 
-Requires WebGL support and modern JavaScript features.
+### **Pink Floyd**
+- Pink cosmic background
+- Yellow-to-purple gradient
+- Non-metallic matte surface
+- High ambient lighting with fine detail
 
-## Development
+## 💾 Preset Management
 
-### Project Structure
+### **Creating Custom Presets**
+1. Adjust all parameters to your liking
+2. Enter a name in the "Save Current Settings" field
+3. Click **Save** - your preset is added to the dropdown
+
+### **Sharing Presets**
+1. Click **"Export All Presets"** to download a JSON file
+2. Share the file with others
+3. Others can **"Import Presets"** to add your creations
+
+### **Preset File Format**
+```json
+{
+  "version": "1.0",
+  "timestamp": "2024-01-01T00:00:00.000Z",
+  "presets": {
+    "your-preset-name": {
+      "ambient": 0,
+      "frequency": 3.05,
+      "color1": {"r": 0, "g": 1, "b": 0.97},
+      // ... all parameters
+    }
+  }
+}
+```
+
+## 🛠 Technical Details
+
+### **Built With**
+- **Three.js r128** - 3D graphics library
+- **WebGL** - Hardware-accelerated rendering
+- **GLSL Shaders** - Custom vertex and fragment shaders
+
+### **Shader Features**
+- **Multi-octave noise generation** with 5 different algorithms
+- **Physically-based material properties**
+- **Real-time displacement mapping**
+- **Gradient color interpolation**
+- **Domain warping and pole control**
+
+### **Performance Optimizations**
+- **512 segments** geometry for high detail
+- **Efficient shader compilation** and uniform updates
+- **Optimized render loop** with RAF
+- **Memory management** for environment textures
+
+### **Browser Support**
+- **Chrome 60+** ✅
+- **Firefox 55+** ✅  
+- **Safari 12+** ✅
+- **Edge 79+** ✅
+
+*Requires WebGL support and modern JavaScript features*
+
+## 📁 Project Structure
+
 ```
 blob-mixer/
-├── index.html          # Main application file
-├── README.md           # This file
+├── index.html          # Main application
+├── README.md           # This documentation
 ├── package.json        # NPM configuration
 ├── .gitignore         # Git ignore rules
 └── LICENSE            # MIT license
 ```
 
-### Customization
-The blob generator is highly customizable. Key areas for modification:
+## 🚀 Advanced Usage
 
-1. **Noise Functions**: Edit the GLSL shader code in the `material.onBeforeCompile` function
-2. **UI Controls**: Add new control groups in the HTML and corresponding JavaScript
-3. **Material Properties**: Extend the `params` object and update functions
-4. **Lighting Setup**: Modify the light creation and positioning code
+### **URL Parameters**
+The blob generator supports URL parameters matching the original BlobMixer format:
+```
+?ambient=0&frequency=3.05&metalness=1&color1=rgba(0,255,248,1)
+```
 
-### Performance Considerations
-- Uses 64x64 sphere geometry for good balance of quality and performance
-- Shader compilation happens once at startup
-- Real-time parameter updates are optimized with RAF
-- Error handling prevents crashes on unsupported devices
+### **Keyboard Shortcuts**
+- **Spacebar** - Toggle animation
+- **R** - Reset view
+- **S** - Toggle settings panel
 
-## Contributing
+### **Custom Modifications**
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+#### **Adding New Noise Types**
+Extend the noise functions in the vertex shader:
+```glsl
+// Add your custom noise function
+float customNoise(vec3 p) {
+    // Your implementation here
+    return value;
+}
+```
 
-## License
+#### **Creating New Presets**
+Add to the `presets` object in JavaScript:
+```javascript
+presets['my-preset'] = {
+    ambient: 0.5,
+    frequency: 4.0,
+    // ... your parameters
+};
+```
+
+## 🤝 Contributing
+
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
+4. **Push** to the branch (`git push origin feature/amazing-feature`)
+5. **Open** a Pull Request
+
+### **Development Guidelines**
+- Test in multiple browsers
+- Maintain 60fps performance
+- Follow existing code style
+- Update documentation for new features
+
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Inspiration
+## 🙏 Acknowledgments
 
-Inspired by the amazing blob generators and Three.js community. Special thanks to the Three.js team for creating such a powerful and accessible 3D library.
+- **Three.js Community** for the amazing 3D library
+- **14islands** for the original BlobMixer inspiration
+- **Microsoft Fluent Design** for UI component inspiration
+- **WebGL Fundamentals** for shader programming resources
 
-## Links
+## 🔗 Links
 
 - [Three.js Documentation](https://threejs.org/docs/)
 - [WebGL Fundamentals](https://webglfundamentals.org/)
-- [Shader Reference](https://www.khronos.org/opengl/wiki/OpenGL_Shading_Language)
+- [GLSL Shader Reference](https://www.khronos.org/opengl/wiki/OpenGL_Shading_Language)
+- [Original BlobMixer](https://blobmixer.14islands.com/)
+
+---
+
+**Made with ❤️ and WebGL**
